@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Feliz Cumpleaños Lupe</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    #app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+
+    /* --- 1. VIDEO DE INTRO (ARRANCA AL ABRIR) --- */
+    #screen-intro {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 35;
+    }
+
+    #video-intro {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .intro-controles {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      gap: 10px;
+      z-index: 36;
+    }
+
+    .btn-intro {
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.78);
+      border: 2px solid #fff;
+      border-radius: 30px;
+      cursor: pointer;
+    }
+
+    .btn-intro:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    /* --- 2. PORTADA (APARECE AL TERMINAR EL VIDEO) --- */
+    #screen-portada {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 6vh;
+      background-color: #111;
+      background-image: url('portada.png');
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: 25;
+    }
+
+    .btn-principal {
+      padding: 16px 42px;
+      font-size: clamp(18px, 2.6vw, 28px);
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #fff;
+      background: linear-gradient(180deg, #ff3b3b 0%, #b80000 100%);
+      border: 4px solid #fff;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+      transition: transform 0.12s ease;
+    }
+
+    .btn-principal:hover {
+      transform: scale(1.06);
+    }
+
+    .btn-principal:active {
+      transform: scale(0.96);
+    }
+
+    .btn-secundario {
+      padding: 11px 24px;
+      font-size: 15px;
+      font-weight: 800;
+      color: #1d1e2c;
+      background: linear-gradient(180deg, #ffd166 0%, #f77f00 100%);
+      border: 2px solid #fff;
+      border-radius: 25px;
+      cursor: pointer;
+      box-shadow: 0 5px 14px rgba(0, 0, 0, 0.45);
+    }
+
+    .btn-secundario:hover {
+      transform: scale(1.04);
+    }
+
+    /* --- 3. JUEGO --- */
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      right: 12px;
+      display: none;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .hud-grupo {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .hud-box {
+      background: rgba(0, 0, 0, 0.78);
+      border: 2px solid rgba(255, 255, 255, 0.88);
+      border-radius: 12px;
+      padding: 5px 11px;
+      color: #fff;
+      font-size: clamp(11px, 1.5vw, 17px);
+      font-weight: 800;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    .hud-box span {
+      color: #ffdf4d;
+    }
+
+    /* MARCADOR CENTRAL DE LETRAS AGARRADAS */
+    #marcador-frase {
+      background: rgba(0, 0, 0, 0.82);
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      border-radius: 14px;
+      padding: 5px 9px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 3px;
+      max-width: min(94vw, 680px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+    }
+
+    .slot-letra {
+      width: clamp(17px, 2.2vw, 24px);
+      height: clamp(21px, 2.6vw, 28px);
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1.5px solid rgba(255, 255, 255, 0.28);
+      color: rgba(255, 255, 255, 0.35);
+      font-size: clamp(11px, 1.5vw, 15px);
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .slot-letra.activa {
+      background: linear-gradient(180deg, #ffd166 0%, #f77f00 100%);
+      border-color: #ffffff;
+      color: #1d1e2c;
+      text-shadow: none;
+      transform: scale(1.1);
+      box-shadow: 0 0 10px rgba(255, 209, 102, 0.85);
+    }
+
+    .slot-espacio {
+      width: 7px;
+    }
+
+    #controles-tactiles {
+      position: absolute;
+      bottom: 68px;
+      left: 16px;
+      right: 16px;
+      display: none;
+      justify-content: space-between;
+      align-items: flex-end;
+      pointer-events: none;
+      z-index: 15;
+    }
+
+    .grupo-mover {
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .btn-control {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.85);
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      font-size: 24px;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-control:active {
+      background: rgba(255, 159, 28, 0.85);
+      transform: scale(0.95);
+    }
+
+    .btn-salto {
+      width: auto;
+      padding: 0 22px;
+      font-size: 16px;
+      letter-spacing: 1px;
+      background: rgba(220, 45, 45, 0.88);
+      pointer-events: auto;
+    }
+
+    /* --- 4. FINAL / AGENDAR NOMBRE Y TIEMPO --- */
+    #screen-final {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      text-align: center;
+      color: #fff;
+      padding: 20px;
+      z-index: 22;
+      overflow-y: auto;
+    }
+
+    #final-titulo {
+      font-size: clamp(28px, 5vw, 58px);
+      font-weight: 900;
+      color: #ffdf4d;
+      text-shadow: 3px 3px 0 #000, 0 0 22px rgba(255, 223, 77, 0.6);
+    }
+
+    #final-subtitulo {
+      font-size: clamp(18px, 2.8vw, 32px);
+      font-weight: 800;
+      color: #80ed99;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    #final-detalle {
+      font-size: clamp(15px, 2.1vw, 23px);
+      line-height: 1.45;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    #sector-agendar {
+      background: rgba(18, 22, 36, 0.92);
+      border: 2px solid rgba(255, 255, 255, 0.85);
+      border-radius: 18px;
+      padding: 16px 20px;
+      width: min(92vw, 460px);
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65);
+    }
+
+    #sector-agendar label {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffd166;
+      text-align: left;
+    }
+
+    .fila-agendar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    #input-nombre {
+      flex: 1 1 200px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 2px solid #ffd166;
+      background: #0d101b;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      user-select: text;
+      -webkit-user-select: text;
+      outline: none;
+    }
+
+    #input-nombre:focus {
+      border-color: #80ed99;
+    }
+
+    #estado-agendado {
+      font-size: 13px;
+      font-weight: 700;
+      color: #80ed99;
+      min-height: 18px;
+    }
+
+    #lista-tiempos {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 160px;
+      overflow-y: auto;
+      text-align: left;
+      padding-right: 4px;
+    }
+
+    #lista-tiempos li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 7px 12px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    #lista-tiempos li span.tiempo-item {
+      color: #ffdf4d;
+      font-weight: 900;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 1. VIDEO INTRO -->
+    <div id="screen-intro">
+      <video id="video-intro" src="intro.mp4" autoplay muted playsinline></video>
+      <div class="intro-controles">
+        <button class="btn-intro" id="btn-audio-intro" type="button">🔊 Sonido</button>
+        <button class="btn-intro" id="btn-saltar" type="button">Saltar Intro ⏭</button>
+      </div>
+    </div>
+
+    <!-- 2. PORTADA -->
+    <div id="screen-portada">
+      <button class="btn-principal" id="btn-iniciar" type="button">INICIAR</button>
+    </div>
+
+    <!-- 3. HUD DEL JUEGO -->
+    <div id="hud">
+      <div class="hud-grupo">
+        <div class="hud-box">META: <span id="hud-metros">0.0 m</span></div>
+      </div>
+
+      <!-- MARCADOR SUPERIOR CENTRAL DE LETRAS -->
+      <div id="marcador-frase"></div>
+
+      <div class="hud-grupo">
+        <div class="hud-box">TIEMPO: <span id="hud-tiempo">0.00 s</span></div>
+        <div class="hud-box">RÉCORD: <span id="hud-record">--</span></div>
+      </div>
+    </div>
+
+    <!-- CONTROLES EN PANTALLA -->
+    <div id="controles-tactiles">
+      <div class="grupo-mover">
+        <button class="btn-control" id="btn-izq" type="button">◀</button>
+        <button class="btn-control" id="btn-der" type="button">▶</button>
+      </div>
+      <button class="btn-control btn-salto" id="btn-saltar-juego" type="button">SALTAR</button>
+    </div>
+
+    <!-- CANVAS ALTA RESOLUCIÓN -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 4. PANTALLA FINAL -->
+    <div id="screen-final">
+      <div id="final-titulo">¡Feliz Cumpleaños Lupe!</div>
+      <div id="final-subtitulo">¡Lo lograste! Llegaste con la torta.</div>
+      <div id="final-detalle"></div>
+
+      <!-- SECTOR PARA ESCRIBIR NOMBRE Y AGENDAR TIEMPO -->
+      <div id="sector-agendar">
+        <label for="input-nombre">ESCRIBÍ TU NOMBRE PARA AGENDAR TU TIEMPO</label>
+        <div class="fila-agendar">
+          <input type="text" id="input-nombre" maxlength="24" placeholder="Tu nombre..." autocomplete="off" />
+          <button class="btn-secundario" id="btn-guardar-tiempo" type="button">AGENDAR</button>
+        </div>
+        <div id="estado-agendado"></div>
+        <ul id="lista-tiempos"></ul>
+      </div>
+
+      <button class="btn-principal" id="btn-reintentar" type="button">JUGAR DE NUEVO</button>
+    </div>
+
+    <!-- AUDIO DE FONDO -->
+    <audio id="musica" src="musica.mp3" loop preload="auto"></audio>
+  </div>
+
+  <script>
+    const BASE_CONFIG = {
+      frase: "FELIZ CUMPLEAÑOS LUPE",
+      velocidadMovimiento: 475,
+      fuerzaSalto: -845,
+      gravedad: 2500,
+      alturaZombie: 146,
+      alturaZombie2: 146,
+      ajustePiesPx: 0,
+      anchoLetraBase: 76,
+      altoLetra: 84,
+      espacioEntreLetrasBase: 108,
+      variacionEspacio: 42,
+      variacionAltura: 74,
+      cadenciaPaso: 0.14,
+      pixelesPorMetro: 95
+    };
+
+    let CONFIG = { ...BASE_CONFIG };
+    let escalaActual = 1;
+
+    // =========================================================
+    // SONIDOS
+    // =========================================================
+    let audioCtx = null;
+    function obtenerAudioCtx() {
+      if (!audioCtx) {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (Ctx) audioCtx = new Ctx();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
+    }
+
+    const ESCALA_NOTAS = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25];
+
+    function sonarLetra(indice) {
+      const ctxA = obtenerAudioCtx();
+      if (!ctxA) return;
+      const now = ctxA.currentTime;
+      const osc = ctxA.createOscillator();
+      const gain = ctxA.createGain();
+      const freq = ESCALA_NOTAS[indice % ESCALA_NOTAS.length];
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.18, now + 0.11);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.22, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+      osc.connect(gain);
+      gain.connect(ctxA.destination);
+      osc.start(now);
+      osc.stop(now + 0.17);
+    }
+
+    function sonarSalto() {
+      const ctxA = obtenerAudioCtx();
+      if (!ctxA) return;
+      const now = ctxA.currentTime;
+      const osc = ctxA.createOscillator();
+      const gain = ctxA.createGain();
+
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(190, now);
+      osc.frequency.exponentialRampToValueAtTime(430, now + 0.11);
+
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+      osc.connect(gain);
+      gain.connect(ctxA.destination);
+      osc.start(now);
+      osc.stop(now + 0.13);
+    }
+
+    function sonarMuerte() {
+      const ctxA = obtenerAudioCtx();
+      if (!ctxA) return;
+      const now = ctxA.currentTime;
+      const osc = ctxA.createOscillator();
+      const gain = ctxA.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(270, now);
+      osc.frequency.linearRampToValueAtTime(70, now + 0.35);
+
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
+
+      osc.connect(gain);
+      gain.connect(ctxA.destination);
+      osc.start(now);
+      osc.stop(now + 0.37);
+    }
+
+    function sonarVictoria() {
+      const ctxA = obtenerAudioCtx();
+      if (!ctxA) return;
+      const notas = [523.25, 659.25, 783.99, 1046.50];
+      notas.forEach((f, idx) => {
+        const now = ctxA.currentTime + idx * 0.1;
+        const osc = ctxA.createOscillator();
+        const gain = ctxA.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, now);
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+        osc.connect(gain);
+        gain.connect(ctxA.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      });
+    }
+
+    // =========================================================
+    // CARGA DE ARCHIVOS
+    // =========================================================
+    const imgFondo = new Image();
+    imgFondo.src = 'fondo.jpg';
+
+    const imgZombie = new Image();
+    imgZombie.src = 'zombie.png';
+
+    const imgZombie2 = new Image();
+    imgZombie2.src = 'zombie2.png';
+
+    const imgSalto = new Image();
+    imgSalto.src = 'zombie_salto.png';
+
+    const imgPaso = new Image();
+    imgPaso.src = 'zombie_paso.png';
+
+    const screenIntro = document.getElementById('screen-intro');
+    const videoIntro = document.getElementById('video-intro');
+    const btnAudioIntro = document.getElementById('btn-audio-intro');
+    const screenPortada = document.getElementById('screen-portada');
+    const screenFinal = document.getElementById('screen-final');
+    const finalTitulo = document.getElementById('final-titulo');
+    const finalSubtitulo = document.getElementById('final-subtitulo');
+    const finalDetalle = document.getElementById('final-detalle');
+    const sectorAgendar = document.getElementById('sector-agendar');
+    const inputNombre = document.getElementById('input-nombre');
+    const btnGuardarTiempo = document.getElementById('btn-guardar-tiempo');
+    const estadoAgendado = document.getElementById('estado-agendado');
+    const listaTempos = document.getElementById('lista-tiempos');
+    const hud = document.getElementById('hud');
+    const marcadorFrase = document.getElementById('marcador-frase');
+    const controlesTactiles = document.getElementById('controles-tactiles');
+    const hudMetros = document.getElementById('hud-metros');
+    const hudTiempo = document.getElementById('hud-tiempo');
+    const hudRecord = document.getElementById('hud-record');
+    const musica = document.getElementById('musica');
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let anchoPantalla = window.innerWidth;
+    let altoPantalla = window.innerHeight;
+
+    function calcularConfigEscalada() {
+      const factorAncho = anchoPantalla / 960;
+      const factorAlto = altoPantalla / 620;
+      escalaActual = Math.max(0.54, Math.min(1.05, Math.min(factorAncho, factorAlto)));
+
+      CONFIG = {
+        ...BASE_CONFIG,
+        velocidadMovimiento: BASE_CONFIG.velocidadMovimiento * Math.max(0.72, Math.min(1, anchoPantalla / 820)),
+        fuerzaSalto: BASE_CONFIG.fuerzaSalto * Math.max(0.84, Math.min(1.04, altoPantalla / 620)),
+        gravedad: BASE_CONFIG.gravedad * Math.max(0.84, Math.min(1.04, altoPantalla / 620)),
+        alturaZombie: Math.round(BASE_CONFIG.alturaZombie * escalaActual),
+        alturaZombie2: Math.round(BASE_CONFIG.alturaZombie2 * escalaActual),
+        anchoLetraBase: Math.round(BASE_CONFIG.anchoLetraBase * escalaActual),
+        altoLetra: Math.round(BASE_CONFIG.altoLetra * escalaActual),
+        espacioEntreLetrasBase: Math.round(BASE_CONFIG.espacioEntreLetrasBase * Math.max(0.68, escalaActual)),
+        variacionEspacio: Math.round(BASE_CONFIG.variacionEspacio * escalaActual),
+        variacionAltura: Math.round(BASE_CONFIG.variacionAltura * escalaActual),
+        pixelesPorMetro: BASE_CONFIG.pixelesPorMetro * Math.max(0.7, escalaActual)
+      };
+    }
+
+    function ajustarResolucionCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      anchoPantalla = window.innerWidth;
+      altoPantalla = window.innerHeight;
+      calcularConfigEscalada();
+      canvas.width = anchoPantalla * dpr;
+      canvas.height = altoPantalla * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+    }
+    window.addEventListener('resize', ajustarResolucionCanvas);
+    ajustarResolucionCanvas();
+
+    // =========================================================
+    // AGENDA DE NOMBRES Y TIEMPOS
+    // =========================================================
+    const CLAVE_AGENDA = 'agenda_tiempos_lupe_v1';
+    let tiempoPartidaActual = 0;
+    let yaAgendoActual = false;
+
+    function cargarAgenda() {
+      try {
+        const raw = localStorage.getItem(CLAVE_AGENDA);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function guardarAgenda(arr) {
+      localStorage.setItem(CLAVE_AGENDA, JSON.stringify(arr));
+    }
+
+    function renderizarListaTiempos() {
+      const registros = cargarAgenda().sort((a, b) => a.tiempo - b.tiempo);
+      listaTempos.innerHTML = '';
+
+      if (registros.length === 0) {
+        const li = document.createElement('li');
+        li.innerHTML = '<span>Aún no hay tiempos agendados</span><span class="tiempo-item">--</span>';
+        listaTempos.appendChild(li);
+        return;
+      }
+
+      registros.slice(0, 8).forEach((reg, idx) => {
+        const li = document.createElement('li');
+        const medalla = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
+        li.innerHTML = `<span>${medalla} ${escaparHTML(reg.nombre)}</span><span class="tiempo-item">${Number(reg.tiempo).toFixed(2)} s</span>`;
+        listaTempos.appendChild(li);
+      });
+    }
+
+    function escaparHTML(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function agendarTiempoActual() {
+      if (yaAgendoActual) return;
+      const nombreLimpio = (inputNombre.value || '').trim() || 'Jugador/a';
+      const registros = cargarAgenda();
+      registros.push({
+        nombre: nombreLimpio,
+        tiempo: Number(tiempoPartidaActual.toFixed(2)),
+        fecha: new Date().toLocaleDateString()
+      });
+      guardarAgenda(registros);
+      yaAgendoActual = true;
+      btnGuardarTiempo.disabled = true;
+      inputNombre.disabled = true;
+      estadoAgendado.textContent = `¡Agendado! ${nombreLimpio} — ${tiempoPartidaActual.toFixed(2)} s`;
+      renderizarListaTiempos();
+    }
+
+    btnGuardarTiempo.addEventListener('click', agendarTiempoActual);
+    inputNombre.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        agendarTiempoActual();
+      }
+    });
+
+    let mejorTiempo = localStorage.getItem('record_lupe_zombie');
+    if (mejorTiempo) {
+      hudRecord.textContent = parseFloat(mejorTiempo).toFixed(2) + ' s';
+    }
+
+    // =========================================================
+    // VIDEO INTRO (SIN FRENARSE AL TOCAR PANTALLA)
+    // =========================================================
+    function actualizarBotonAudioIntro() {
+      btnAudioIntro.textContent = videoIntro.muted ? '🔊 Sonido' : '🔇 Silencio';
+    }
+
+    function iniciarIntroSegura() {
+      screenIntro.style.display = 'flex';
+      screenPortada.style.display = 'none';
+      videoIntro.currentTime = 0;
+      videoIntro.muted = true;
+      videoIntro.volume = 1.0;
+      actualizarBotonAudioIntro();
+      videoIntro.play().catch(() => {});
+    }
+
+    btnAudioIntro.addEventListener('click', (e) => {
+      e.stopPropagation();
+      obtenerAudioCtx();
+      videoIntro.muted = !videoIntro.muted;
+      videoIntro.volume = 1.0;
+      if (videoIntro.paused) {
+        videoIntro.play().catch(() => {});
+      }
+      actualizarBotonAudioIntro();
+    });
+
+    function mostrarPortada() {
+      try { videoIntro.pause(); } catch (_) {}
+      screenIntro.style.display = 'none';
+      screenPortada.style.display = 'flex';
+    }
+
+    videoIntro.addEventListener('ended', mostrarPortada);
+    videoIntro.addEventListener('error', mostrarPortada);
+    document.getElementById('btn-saltar').addEventListener('click', (e) => {
+      e.stopPropagation();
+      mostrarPortada();
+    });
+
+    document.getElementById('btn-iniciar').addEventListener('click', () => {
+      obtenerAudioCtx();
+      screenPortada.style.display = 'none';
+      musica.currentTime = 0;
+      musica.play().catch(() => {});
+      iniciarPartida();
+    });
+
+    document.getElementById('btn-reintentar').addEventListener('click', () => {
+      obtenerAudioCtx();
+      screenFinal.style.display = 'none';
+      iniciarPartida();
+    });
+
+    // =========================================================
+    // NIVEL COMPLETO
+    // =========================================================
+    const PALETAS_LETRAS = [
+      { apagadaTop: '#5c2b3b', apagadaBot: '#331620', encendidaTop: '#ff4d6d', encendidaBot: '#c9184a', brillo: '#ff8fa3' },
+      { apagadaTop: '#5e491c', apagadaBot: '#382a0e', encendidaTop: '#ffd166', encendidaBot: '#f77f00', brillo: '#fff3b0' },
+      { apagadaTop: '#2a4d24', apagadaBot: '#162b12', encendidaTop: '#80ed99', encendidaBot: '#2b9348', brillo: '#c7f9cc' },
+      { apagadaTop: '#1d3e5e', apagadaBot: '#0f2236', encendidaTop: '#4cc9f0', encendidaBot: '#00509d', brillo: '#caf0f8' },
+      { apagadaTop: '#4a235a', apagadaBot: '#291133', encendidaTop: '#e0aaff', encendidaBot: '#7209b7', brillo: '#f3d5ff' }
+    ];
+
+    let estado = 'esperando';
+    let plataformas = [];
+    let sierras = [];
+    let puffs = [];
+    let papelitos = [];
+    let globos = [];
+    let slotsMarcador = [];
+    let totalLetrasContables = 0;
+    let posicionMetaX = 0;
+    let plataformaMeta = null;
+    let tiempoFestejo = 0;
+
+    let zombie = {
+      x: 0,
+      y: 0,
+      vy: 0,
+      ancho: 110,
+      alto: CONFIG.alturaZombie,
+      enSuelo: true,
+      platActual: null,
+      mirandoIzquierda: false,
+      scaleX: 1,
+      scaleY: 1,
+      tiempoPaso: 0,
+      framePasoAlterno: false
+    };
+
+    let camaraX = 0;
+    let fondoScroll = 0;
+    let tiempoTranscurrido = 0;
+    let ultimoFrame = 0;
+
+    const teclas = {
+      izq: false,
+      der: false
+    };
+
+    function crearPuff(x, y, radioBase, color) {
+      puffs.push({
+        x,
+        y,
+        r: radioBase,
+        alpha: 0.85,
+        color
+      });
+    }
+
+    function crearFestejoMeta() {
+      papelitos = [];
+      globos = [];
+      const colores = ['#ff4d6d', '#ffd166', '#80ed99', '#4cc9f0', '#e0aaff', '#ff9f1c'];
+
+      for (let i = 0; i < 160; i++) {
+        papelitos.push({
+          x: Math.random() * anchoPantalla,
+          y: -Math.random() * altoPantalla,
+          w: 7 + Math.random() * 9,
+          h: 5 + Math.random() * 7,
+          vy: 95 + Math.random() * 170,
+          vx: -45 + Math.random() * 90,
+          rot: Math.random() * Math.PI * 2,
+          vRot: -5 + Math.random() * 10,
+          color: colores[i % colores.length]
+        });
+      }
+
+      for (let i = 0; i < 26; i++) {
+        globos.push({
+          x: 40 + Math.random() * Math.max(100, anchoPantalla - 80),
+          y: altoPantalla + 40 + Math.random() * 260,
+          r: 22 + Math.random() * 12,
+          vy: 75 + Math.random() * 95,
+          fase: Math.random() * Math.PI * 2,
+          color: colores[i % colores.length]
+        });
+      }
+    }
+
+    function construirMarcadorCentral() {
+      marcadorFrase.innerHTML = '';
+      slotsMarcador = [];
+
+      CONFIG.frase.split('').forEach((char) => {
+        if (char === ' ') {
+          const sp = document.createElement('div');
+          sp.className = 'slot-espacio';
+          marcadorFrase.appendChild(sp);
+          return;
+        }
+        const slot = document.createElement('div');
+        slot.className = 'slot-letra';
+        slot.textContent = char;
+        marcadorFrase.appendChild(slot);
+        slotsMarcador.push(slot);
+      });
+    }
+
+    function agregarCuboIntermedio(x, baseY, texto, paletaIdx, notaIdx, moverVertical, ampExtra = 0, velExtra = 0) {
+      const ladoCubo = Math.round(68 * escalaActual);
+      const ampY = moverVertical ? (44 + ampExtra) * escalaActual : 0;
+      const velY = moverVertical ? (2.7 + velExtra) : 0;
+      const faseY = x * 0.013;
+      plataformas.push({
+        x,
+        baseX: x,
+        y: baseY + (ampY > 0 ? Math.sin(faseY) * ampY : 0),
+        baseY,
+        w: ladoCubo,
+        h: ladoCubo,
+        texto,
+        esMeta: false,
+        contable: false,
+        slotIndex: -1,
+        encendida: false,
+        pulsoLuz: 0,
+        notaIdx,
+        ampX: 0,
+        velX: 0,
+        ampY,
+        velY,
+        faseY,
+        paleta: PALETAS_LETRAS[paletaIdx % PALETAS_LETRAS.length]
+      });
+    }
+
+    function agregarSierra(sx, sBaseY, idx, diagonal = false) {
+      sierras.push({
+        x: sx,
+        baseX: sx,
+        y: sBaseY,
+        baseY: sBaseY,
+        r: Math.round(21 * escalaActual),
+        movilY: true,
+        ampY: (diagonal ? 34 : (58 + (idx % 3) * 12)) * escalaActual,
+        velY: diagonal ? 2.6 : (3.3 + (idx % 3) * 0.4),
+        movilX: diagonal,
+        ampX: diagonal ? 26 * escalaActual : 0,
+        velX: diagonal ? 2.6 : 0,
+        fase: idx * 1.15,
+        angulo: 0
+      });
+    }
+
+    function construirNivel() {
+      calcularConfigEscalada();
+      plataformas = [];
+      sierras = [];
+      totalLetrasContables = 0;
+      construirMarcadorCentral();
+
+      const baseY = altoPantalla * 0.68;
+      const anchoInicio = Math.round(220 * Math.max(0.72, escalaActual));
+      const margenTecho = Math.round(145 * escalaActual);
+      const margenPiso = Math.round(165 * escalaActual);
+
+      const platInicio = {
+        x: Math.round(40 * escalaActual),
+        baseX: Math.round(40 * escalaActual),
+        y: baseY,
+        baseY,
+        w: anchoInicio,
+        h: CONFIG.altoLetra,
+        texto: 'START',
+        esMeta: false,
+        contable: false,
+        slotIndex: -1,
+        encendida: true,
+        pulsoLuz: 0,
+        notaIdx: 0,
+        ampX: 0,
+        velX: 0,
+        ampY: 0,
+        velY: 0,
+        faseY: 0,
+        paleta: PALETAS_LETRAS[3]
+      };
+      plataformas.push(platInicio);
+
+      let cursorX = platInicio.x + platInicio.w + Math.round(85 * escalaActual);
+      const caracteres = CONFIG.frase.split('');
+      let indiceLetra = 0;
+      let sierrasDiagonalesAgregadas = 0;
+
+      caracteres.forEach((char) => {
+        if (char === ' ') {
+          const cuboA = cursorX + Math.round(10 * escalaActual);
+          const sierraEsp = cursorX + Math.round(110 * escalaActual);
+          const cuboB = cursorX + Math.round(155 * escalaActual);
+          agregarCuboIntermedio(cuboA, baseY - 28 * escalaActual, '★', 2, indiceLetra + 1, true, 16, 0.5);
+          const hacerDiagonal = sierrasDiagonalesAgregadas < 4;
+          agregarSierra(sierraEsp, baseY - 20 * escalaActual, indiceLetra + 50, hacerDiagonal);
+          if (hacerDiagonal) sierrasDiagonalesAgregadas++;
+          agregarCuboIntermedio(cuboB, baseY + 20 * escalaActual, '◆', 0, indiceLetra + 2, true, 14, 0.4);
+          cursorX += Math.round(300 * escalaActual);
+          return;
+        }
+
+        const patronOnda = Math.sin(indiceLetra * 1.3) * CONFIG.variacionAltura;
+        const escalonExtra = ((indiceLetra % 2 === 0) ? -22 : 22) * escalaActual;
+        const yCentro = Math.max(margenTecho, Math.min(altoPantalla - margenPiso, baseY + patronOnda + escalonExtra));
+
+        const seMueveArribaAbajo = (indiceLetra % 2 === 0 || indiceLetra === 3 || indiceLetra === 7);
+        const ampY = seMueveArribaAbajo ? (44 + (indiceLetra % 3) * 12) * escalaActual : 0;
+        const velY = seMueveArribaAbajo ? (2.6 + (indiceLetra % 3) * 0.45) : 0;
+        const faseY = indiceLetra * 1.1;
+
+        const yInicial = yCentro + (ampY > 0 ? Math.sin(faseY) * ampY : 0);
+        const wLetra = ((indiceLetra % 2 === 1) ? CONFIG.anchoLetraBase - Math.round(12 * escalaActual) : CONFIG.anchoLetraBase);
+
+        const platLetra = {
+          x: cursorX,
+          baseX: cursorX,
+          y: yInicial,
+          baseY: yCentro,
+          w: wLetra,
+          h: CONFIG.altoLetra,
+          texto: char,
+          esMeta: false,
+          contable: true,
+          slotIndex: indiceLetra,
+          encendida: false,
+          pulsoLuz: 0,
+          notaIdx: indiceLetra,
+          ampX: 0,
+          velX: 0,
+          ampY,
+          velY,
+          faseY,
+          paleta: PALETAS_LETRAS[indiceLetra % PALETAS_LETRAS.length]
+        };
+        plataformas.push(platLetra);
+
+        const huecoAntesCubo = Math.round((92 + (indiceLetra % 3) * 20) * escalaActual);
+        const cuboX = cursorX + wLetra + huecoAntesCubo;
+        const cuboY = Math.max(margenTecho, Math.min(altoPantalla - margenPiso, yCentro + ((indiceLetra % 2 === 0) ? -28 : 20) * escalaActual));
+
+        const esDiagonal1 = sierrasDiagonalesAgregadas < 4 && (indiceLetra === 1 || indiceLetra === 5 || indiceLetra === 9);
+        agregarSierra(
+          cursorX + wLetra + huecoAntesCubo * 0.5,
+          (yCentro + cuboY) * 0.5 - 12 * escalaActual,
+          indiceLetra * 2,
+          esDiagonal1
+        );
+        if (esDiagonal1) sierrasDiagonalesAgregadas++;
+
+        agregarCuboIntermedio(
+          cuboX,
+          cuboY,
+          (indiceLetra % 2 === 0) ? '★' : '◆',
+          indiceLetra + 1,
+          indiceLetra + 2,
+          true,
+          (indiceLetra % 3) * 12,
+          (indiceLetra % 2) * 0.5
+        );
+
+        const ladoCuboActual = Math.round(68 * escalaActual);
+        const huecoDespuesCubo = Math.round((96 + ((indiceLetra + 1) % 3) * 22) * escalaActual);
+
+        agregarSierra(
+          cuboX + ladoCuboActual + huecoDespuesCubo * 0.5,
+          cuboY - 14 * escalaActual,
+          indiceLetra * 2 + 1,
+          false
+        );
+
+        totalLetrasContables++;
+        cursorX = cuboX + ladoCuboActual + huecoDespuesCubo;
+        indiceLetra++;
+      });
+
+      const platSubeBajaX = cursorX + Math.round(105 * escalaActual);
+      const platSubeBajaY = baseY - 18 * escalaActual;
+      const wPlatMovil = Math.round(135 * escalaActual);
+      const hPlatMovil = Math.round(48 * escalaActual);
+
+      plataformas.push({
+        x: platSubeBajaX,
+        baseX: platSubeBajaX,
+        y: platSubeBajaY,
+        baseY: platSubeBajaY,
+        w: wPlatMovil,
+        h: hPlatMovil,
+        texto: '▲ ▼',
+        esMeta: false,
+        contable: false,
+        slotIndex: -1,
+        encendida: false,
+        pulsoLuz: 0,
+        notaIdx: 4,
+        ampX: 0,
+        velX: 0,
+        ampY: 70 * escalaActual,
+        velY: 2.5,
+        faseY: 0.2,
+        paleta: PALETAS_LETRAS[2]
+      });
+
+      const platDeslizante1X = platSubeBajaX + Math.round(275 * escalaActual);
+      const platDeslizante1Y = baseY - 22 * escalaActual;
+      plataformas.push({
+        x: platDeslizante1X,
+        baseX: platDeslizante1X,
+        y: platDeslizante1Y,
+        baseY: platDeslizante1Y,
+        w: wPlatMovil,
+        h: hPlatMovil,
+        texto: '⬅ ➡ 1',
+        esMeta: false,
+        contable: false,
+        slotIndex: -1,
+        encendida: false,
+        pulsoLuz: 0,
+        notaIdx: 5,
+        ampX: 82 * escalaActual,
+        velX: 2.1,
+        ampY: 0,
+        velY: 0,
+        faseY: 0.4,
+        paleta: PALETAS_LETRAS[1]
+      });
+
+      const platDeslizante2X = platDeslizante1X + Math.round(305 * escalaActual);
+      const platDeslizante2Y = baseY - 40 * escalaActual;
+      plataformas.push({
+        x: platDeslizante2X,
+        baseX: platDeslizante2X,
+        y: platDeslizante2Y,
+        baseY: platDeslizante2Y,
+        w: wPlatMovil,
+        h: hPlatMovil,
+        texto: '⬅ ➡ 2',
+        esMeta: false,
+        contable: false,
+        slotIndex: -1,
+        encendida: false,
+        pulsoLuz: 0,
+        notaIdx: 7,
+        ampX: 86 * escalaActual,
+        velX: 2.4,
+        ampY: 0,
+        velY: 0,
+        faseY: 1.9,
+        paleta: PALETAS_LETRAS[4]
+      });
+
+      const metaX = platDeslizante2X + Math.round(285 * escalaActual);
+      posicionMetaX = metaX;
+
+      plataformaMeta = {
+        x: metaX,
+        baseX: metaX,
+        y: baseY - 10 * escalaActual,
+        baseY: baseY - 10 * escalaActual,
+        w: Math.round(220 * Math.max(0.75, escalaActual)),
+        h: CONFIG.altoLetra + Math.round(8 * escalaActual),
+        texto: '🎂 META',
+        esMeta: true,
+        contable: false,
+        slotIndex: -1,
+        encendida: false,
+        pulsoLuz: 0,
+        notaIdx: 9,
+        ampX: 0,
+        velX: 0,
+        ampY: 0,
+        velY: 0,
+        faseY: 0,
+        paleta: {
+          apagadaTop: '#245953',
+          apagadaBot: '#12302d',
+          encendidaTop: '#2ec4b6',
+          encendidaBot: '#008080',
+          brillo: '#9bf6ff'
+        }
+      };
+      plataformas.push(plataformaMeta);
+    }
+
+    function colocarEnSuperficie(plat) {
+      zombie.y = plat.y - zombie.alto + CONFIG.ajustePiesPx;
+      zombie.vy = 0;
+      zombie.enSuelo = true;
+      zombie.platActual = plat;
+    }
+
+    function actualizarHUD() {
+      const distanciaRestantePx = Math.max(0, posicionMetaX - (zombie.x + zombie.ancho * 0.5));
+      const metrosRestantes = distanciaRestantePx / CONFIG.pixelesPorMetro;
+      hudMetros.textContent = `${metrosRestantes.toFixed(1)} m`;
+    }
+
+    function iniciarPartida() {
+      construirNivel();
+      puffs = [];
+      papelitos = [];
+      globos = [];
+      tiempoFestejo = 0;
+      yaAgendoActual = false;
+      btnGuardarTiempo.disabled = false;
+      inputNombre.disabled = false;
+      estadoAgendado.textContent = '';
+
+      const ratio = (imgZombie.naturalWidth && imgZombie.naturalHeight)
+        ? (imgZombie.naturalWidth / imgZombie.naturalHeight)
+        : 0.85;
+
+      zombie.alto = CONFIG.alturaZombie;
+      zombie.ancho = zombie.alto * ratio;
+      zombie.x = Math.round(90 * escalaActual);
+      colocarEnSuperficie(plataformas[0]);
+      zombie.mirandoIzquierda = false;
+      zombie.scaleX = 1;
+      zombie.scaleY = 1;
+      zombie.tiempoPaso = 0;
+      zombie.framePasoAlterno = false;
+
+      teclas.izq = false;
+      teclas.der = false;
+      camaraX = 0;
+      fondoScroll = 0;
+      tiempoTranscurrido = 0;
+      estado = 'jugando';
+      hud.style.display = 'flex';
+      controlesTactiles.style.display = 'flex';
+      actualizarHUD();
+      ultimoFrame = performance.now();
+      requestAnimationFrame(loopJuego);
+    }
+
+    function saltar() {
+      if (estado !== 'jugando') return;
+      if (zombie.enSuelo) {
+        zombie.vy = CONFIG.fuerzaSalto;
+        zombie.enSuelo = false;
+        zombie.platActual = null;
+        sonarSalto();
+
+        zombie.scaleX = 0.90;
+        zombie.scaleY = 1.12;
+
+        crearPuff(
+          zombie.x + zombie.ancho * 0.5,
+          zombie.y + zombie.alto - CONFIG.ajustePiesPx,
+          12 * escalaActual,
+          'rgba(255, 255, 255, 0.85)'
+        );
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement === inputNombre) return;
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+        teclas.izq = true;
+        zombie.mirandoIzquierda = true;
+      }
+      if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+        teclas.der = true;
+        zombie.mirandoIzquierda = false;
+      }
+      if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+        e.preventDefault();
+        saltar();
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') teclas.izq = false;
+      if (e.code === 'ArrowRight' || e.code === 'KeyD') teclas.der = false;
+    });
+
+    const btnIzq = document.getElementById('btn-izq');
+    const btnDer = document.getElementById('btn-der');
+    const btnSaltarJuego = document.getElementById('btn-saltar-juego');
+
+    btnIzq.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      teclas.izq = true;
+      zombie.mirandoIzquierda = true;
+    });
+    btnIzq.addEventListener('pointerup', () => (teclas.izq = false));
+    btnIzq.addEventListener('pointerleave', () => (teclas.izq = false));
+
+    btnDer.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      teclas.der = true;
+      zombie.mirandoIzquierda = false;
+    });
+    btnDer.addEventListener('pointerup', () => (teclas.der = false));
+    btnDer.addEventListener('pointerleave', () => (teclas.der = false));
+
+    btnSaltarJuego.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      saltar();
+    });
+
+    function actualizarFestejo(dt) {
+      tiempoFestejo += dt;
+      for (const p of papelitos) {
+        p.x += (p.vx + Math.sin(tiempoFestejo * 4 + p.rot) * 35) * dt;
+        p.y += p.vy * dt;
+        p.rot += p.vRot * dt;
+        if (p.y > altoPantalla + 20) {
+          p.y = -15;
+          p.x = Math.random() * anchoPantalla;
+        }
+      }
+      for (const g of globos) {
+        g.y -= g.vy * dt;
+        g.x += Math.sin(tiempoFestejo * 2.2 + g.fase) * 35 * dt;
+        if (g.y < -90) {
+          g.y = altoPantalla + 60;
+          g.x = 40 + Math.random() * Math.max(100, anchoPantalla - 80);
+        }
+      }
+    }
+
+    function loopJuego(ahora) {
+      if (estado !== 'jugando' && estado !== 'festejando') return;
+      const dt = Math.min((ahora - ultimoFrame) / 1000, 0.05);
+      ultimoFrame = ahora;
+
+      if (estado === 'jugando') {
+        actualizar(dt);
+      } else if (estado === 'festejando') {
+        actualizarFestejo(dt);
+      }
+
+      dibujar();
+      requestAnimationFrame(loopJuego);
+    }
+
+    function actualizar(dt) {
+      tiempoTranscurrido += dt;
+      hudTiempo.textContent = tiempoTranscurrido.toFixed(2) + ' s';
+
+      for (const plat of plataformas) {
+        const prevX = plat.x;
+        if (plat.ampX > 0) {
+          plat.x = plat.baseX + Math.sin(tiempoTranscurrido * plat.velX + plat.faseY) * plat.ampX;
+        }
+        if (plat.ampY > 0) {
+          plat.y = plat.baseY + Math.sin(tiempoTranscurrido * plat.velY + plat.faseY) * plat.ampY;
+        }
+        if (plat.pulsoLuz > 0) {
+          plat.pulsoLuz = Math.max(0, plat.pulsoLuz - dt * 2.2);
+        }
+
+        if (zombie.enSuelo && zombie.platActual === plat && plat.ampX > 0) {
+          zombie.x += (plat.x - prevX);
+        }
+      }
+
+      for (const s of sierras) {
+        s.angulo += 13 * dt;
+        if (s.movilY) {
+          s.y = s.baseY + Math.sin(tiempoTranscurrido * s.velY + s.fase) * s.ampY;
+        }
+        if (s.movilX) {
+          s.x = s.baseX + Math.sin(tiempoTranscurrido * s.velX + s.fase) * s.ampX;
+        }
+      }
+
+      const estabaEnSuelo = zombie.enSuelo;
+      const prevPiesY = zombie.y + zombie.alto - CONFIG.ajustePiesPx;
+
+      let movX = 0;
+      if (teclas.izq) movX -= CONFIG.velocidadMovimiento * dt;
+      if (teclas.der) movX += CONFIG.velocidadMovimiento * dt;
+
+      zombie.x = Math.max(20, zombie.x + movX);
+      if (movX !== 0) {
+        fondoScroll += movX * 0.25;
+      }
+
+      const seMueve = teclas.izq || teclas.der;
+      if (estabaEnSuelo && seMueve) {
+        zombie.tiempoPaso += dt;
+        if (zombie.tiempoPaso >= CONFIG.cadenciaPaso) {
+          zombie.tiempoPaso = 0;
+          zombie.framePasoAlterno = !zombie.framePasoAlterno;
+        }
+      } else {
+        zombie.tiempoPaso = 0;
+        zombie.framePasoAlterno = false;
+      }
+
+      if (estabaEnSuelo && zombie.platActual) {
+        const centroPieX = zombie.x + zombie.ancho * 0.5;
+        const sigueSobre =
+          (centroPieX + 14 * escalaActual) > zombie.platActual.x &&
+          (centroPieX - 14 * escalaActual) < (zombie.platActual.x + zombie.platActual.w);
+        if (sigueSobre) {
+          zombie.y = zombie.platActual.y - zombie.alto + CONFIG.ajustePiesPx;
+          zombie.vy = 0;
+        } else {
+          zombie.enSuelo = false;
+          zombie.platActual = null;
+        }
+      }
+
+      if (!zombie.enSuelo) {
+        zombie.vy += CONFIG.gravedad * dt;
+        zombie.y += zombie.vy * dt;
+      }
+
+      const nuevoPiesY = zombie.y + zombie.alto - CONFIG.ajustePiesPx;
+      const centroPieX = zombie.x + zombie.ancho * 0.5;
+      const radioApoyo = 14 * escalaActual;
+
+      let pisoEncontrado = null;
+
+      for (const plat of plataformas) {
+        const dentroAncho =
+          (centroPieX + radioApoyo) > plat.x &&
+          (centroPieX - radioApoyo) < (plat.x + plat.w);
+
+        if (!dentroAncho) continue;
+
+        if (zombie.enSuelo && zombie.platActual === plat) {
+          pisoEncontrado = plat;
+          break;
+        }
+
+        if (zombie.vy >= 0 && prevPiesY <= plat.y + 24 * escalaActual && nuevoPiesY >= plat.y) {
+          pisoEncontrado = plat;
+          break;
+        }
+      }
+
+      if (pisoEncontrado) {
+        const impactoFuerte = !estabaEnSuelo && zombie.vy > 240;
+        colocarEnSuperficie(pisoEncontrado);
+
+        if (!pisoEncontrado.encendida) {
+          pisoEncontrado.encendida = true;
+          pisoEncontrado.pulsoLuz = 1.0;
+          sonarLetra(pisoEncontrado.notaIdx);
+
+          if (pisoEncontrado.contable && pisoEncontrado.slotIndex >= 0 && slotsMarcador[pisoEncontrado.slotIndex]) {
+            slotsMarcador[pisoEncontrado.slotIndex].classList.add('activa');
+          }
+
+          crearPuff(
+            pisoEncontrado.x + pisoEncontrado.w * 0.5,
+            pisoEncontrado.y,
+            14 * escalaActual,
+            pisoEncontrado.paleta.brillo
+          );
+        }
+
+        if (impactoFuerte) {
+          zombie.scaleX = 1.12;
+          zombie.scaleY = 0.88;
+          crearPuff(
+            zombie.x + zombie.ancho * 0.5,
+            pisoEncontrado.y,
+            10 * escalaActual,
+            'rgba(255, 223, 77, 0.8)'
+          );
+        }
+
+        if (pisoEncontrado.esMeta) {
+          actualizarHUD();
+          iniciarVictoriaConFestejo();
+          return;
+        }
+      } else {
+        zombie.enSuelo = false;
+        zombie.platActual = null;
+      }
+
+      const zxCentro = zombie.x + zombie.ancho * 0.5;
+      const zyCentro = zombie.y + zombie.alto * 0.55;
+      for (const s of sierras) {
+        if (Math.hypot(zxCentro - s.x, zyCentro - s.y) < s.r + zombie.ancho * 0.22) {
+          sonarMuerte();
+          finalizarPartida(false, '¡TE TOCÓ UNA SIERRA!');
+          return;
+        }
+      }
+
+      const suavizado = Math.min(1, dt * 14);
+      zombie.scaleX += (1 - zombie.scaleX) * suavizado;
+      zombie.scaleY += (1 - zombie.scaleY) * suavizado;
+
+      for (let i = puffs.length - 1; i >= 0; i--) {
+        puffs[i].r += 65 * escalaActual * dt;
+        puffs[i].alpha -= 2.4 * dt;
+        if (puffs[i].alpha <= 0) {
+          puffs.splice(i, 1);
+        }
+      }
+
+      camaraX = Math.max(0, zombie.x - anchoPantalla * 0.22);
+      actualizarHUD();
+
+      if (zombie.y > altoPantalla + 120) {
+        sonarMuerte();
+        finalizarPartida(false, '¡SE CAYÓ LA TORTA!');
+      }
+    }
+
+    function obtenerSpriteZombieActual() {
+      if (!zombie.enSuelo && imgSalto.complete && imgSalto.naturalWidth > 0) {
+        return imgSalto;
+      }
+      const seMueve = teclas.izq || teclas.der;
+      if (zombie.enSuelo && seMueve && zombie.framePasoAlterno && imgPaso.complete && imgPaso.naturalWidth > 0) {
+        return imgPaso;
+      }
+      return imgZombie;
+    }
+
+    function dibujarZombie2EnMeta() {
+      if (!plataformaMeta) return;
+      const sxMeta = plataformaMeta.x - camaraX;
+      if (sxMeta + plataformaMeta.w < -160 || sxMeta > anchoPantalla + 160) return;
+
+      const altoDib = CONFIG.alturaZombie2;
+      const ratio = (imgZombie2.complete && imgZombie2.naturalWidth && imgZombie2.naturalHeight)
+        ? (imgZombie2.naturalWidth / imgZombie2.naturalHeight)
+        : 0.85;
+      const anchoDib = altoDib * ratio;
+
+      const pieX = sxMeta + plataformaMeta.w * 0.72;
+      const pieY = plataformaMeta.y + CONFIG.ajustePiesPx;
+      const respiraScaleY = 1 + Math.sin(tiempoTranscurrido * 4) * 0.02;
+      const respiraScaleX = 1 - Math.sin(tiempoTranscurrido * 4) * 0.015;
+
+      ctx.save();
+      ctx.translate(pieX, pieY);
+      ctx.scale(respiraScaleX, respiraScaleY);
+
+      if (imgZombie2.complete && imgZombie2.naturalWidth > 0) {
+        ctx.drawImage(imgZombie2, -anchoDib * 0.5, -altoDib, anchoDib, altoDib);
+      }
+
+      ctx.restore();
+    }
+
+    function dibujarLetraInteractiva(plat, sx) {
+      const p = plat.paleta;
+      const enc = plat.encendida;
+      const expansion = plat.pulsoLuz * 5 * escalaActual;
+      const bx = sx - expansion * 0.5;
+      const by = plat.y - expansion * 0.5;
+      const bw = plat.w + expansion;
+      const bh = plat.h + expansion;
+      const radioBorde = Math.max(10, Math.round(18 * escalaActual));
+
+      ctx.save();
+
+      if (enc) {
+        ctx.shadowColor = p.brillo;
+        ctx.shadowBlur = 18 + plat.pulsoLuz * 14;
+      }
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+      roundRect(ctx, bx + 3, by + 6, bw, bh, radioBorde);
+      ctx.fill();
+
+      const grad = ctx.createLinearGradient(0, by, 0, by + bh);
+      if (enc) {
+        grad.addColorStop(0, p.encendidaTop);
+        grad.addColorStop(1, p.encendidaBot);
+      } else {
+        grad.addColorStop(0, p.apagadaTop);
+        grad.addColorStop(1, p.apagadaBot);
+      }
+
+      ctx.fillStyle = grad;
+      roundRect(ctx, bx, by, bw, bh, radioBorde);
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+      const brilloGrad = ctx.createLinearGradient(0, by, 0, by + bh * 0.48);
+      brilloGrad.addColorStop(0, enc ? 'rgba(255, 255, 255, 0.55)' : 'rgba(255, 255, 255, 0.14)');
+      brilloGrad.addColorStop(1, 'rgba(255, 255, 255, 0.02)');
+      ctx.fillStyle = brilloGrad;
+      roundRect(ctx, bx + 3, by + 3, Math.max(6, bw - 6), bh * 0.45, Math.max(8, radioBorde - 4));
+      ctx.fill();
+
+      ctx.strokeStyle = enc ? '#ffffff' : 'rgba(255, 255, 255, 0.35)';
+      ctx.lineWidth = enc ? 3 : 2;
+      roundRect(ctx, bx, by, bw, bh, radioBorde);
+      ctx.stroke();
+
+      const tamFuente = plat.texto.length > 1
+        ? Math.max(13, Math.round(22 * escalaActual))
+        : Math.max(22, Math.round(44 * escalaActual));
+
+      ctx.font = `900 ${tamFuente}px Segoe UI, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = Math.max(4, Math.round(7 * escalaActual));
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.85)';
+      ctx.strokeText(plat.texto, bx + bw / 2, by + bh / 2 + 1);
+
+      ctx.fillStyle = enc ? '#ffffff' : 'rgba(255, 255, 255, 0.65)';
+      ctx.fillText(plat.texto, bx + bw / 2, by + bh / 2 + 1);
+
+      ctx.restore();
+    }
+
+    function dibujarSierra(s) {
+      const sx = s.x - camaraX;
+      if (sx < -100 || sx > anchoPantalla + 100) return;
+
+      ctx.save();
+      ctx.translate(sx, s.y);
+      ctx.rotate(s.angulo);
+
+      const dientes = 8;
+      ctx.beginPath();
+      for (let i = 0; i < dientes * 2; i++) {
+        const radio = (i % 2 === 0) ? s.r + 5 * escalaActual : s.r * 0.68;
+        const ang = (i * Math.PI) / dientes;
+        const px = Math.cos(ang) * radio;
+        const py = Math.sin(ang) * radio;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fillStyle = '#e63946';
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#ffd166';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, s.r * 0.36, 0, Math.PI * 2);
+      ctx.fillStyle = '#1d1e2c';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function dibujarFestejo() {
+      for (const g of globos) {
+        ctx.save();
+        ctx.translate(g.x, g.y);
+
+        ctx.beginPath();
+        ctx.moveTo(0, g.r);
+        ctx.quadraticCurveTo(8, g.r + 22, -4, g.r + 42);
+        ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, g.r * 0.85, g.r, 0, 0, Math.PI * 2);
+        ctx.fillStyle = g.color;
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.ellipse(-g.r * 0.28, -g.r * 0.32, g.r * 0.18, g.r * 0.35, -0.4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      for (const p of papelitos) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w * 0.5, -p.h * 0.5, p.w, p.h);
+        ctx.restore();
+      }
+    }
+
+    function dibujar() {
+      ctx.clearRect(0, 0, anchoPantalla, altoPantalla);
+
+      if (imgFondo.complete && imgFondo.naturalWidth > 0) {
+        const escala = altoPantalla / imgFondo.naturalHeight;
+        const anchoDibujo = imgFondo.naturalWidth * escala;
+        const desp = ((fondoScroll % anchoDibujo) + anchoDibujo) % anchoDibujo;
+        const offset = -desp;
+        for (let x = offset; x < anchoPantalla; x += anchoDibujo) {
+          ctx.drawImage(imgFondo, x, 0, anchoDibujo, altoPantalla);
+        }
+      } else {
+        ctx.fillStyle = '#1b263b';
+        ctx.fillRect(0, 0, anchoPantalla, altoPantalla);
+      }
+
+      for (const plat of plataformas) {
+        const sx = plat.x - camaraX;
+        if (sx + plat.w < -120 || sx > anchoPantalla + 120) continue;
+        dibujarLetraInteractiva(plat, sx);
+      }
+
+      dibujarZombie2EnMeta();
+
+      for (const s of sierras) {
+        dibujarSierra(s);
+      }
+
+      for (const p of puffs) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(p.x - camaraX, p.y, p.r * 1.4, p.r * 0.45, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      const spriteActual = obtenerSpriteZombieActual();
+      const ratioSprite = (spriteActual.naturalWidth && spriteActual.naturalHeight)
+        ? (spriteActual.naturalWidth / spriteActual.naturalHeight)
+        : (zombie.ancho / zombie.alto);
+      const altoDibujo = CONFIG.alturaZombie;
+      const anchoDibujo = altoDibujo * ratioSprite;
+
+      const zx = zombie.x - camaraX + (zombie.ancho - anchoDibujo) * 0.5;
+      const seMueve = teclas.izq || teclas.der;
+
+      let pasoOffsetY = 0;
+      let rotacion = 0;
+      if (!zombie.enSuelo) {
+        rotacion = Math.max(-0.22, Math.min(0.22, zombie.vy * 0.00022));
+      } else if (seMueve) {
+        const cicloPaso = Math.abs(Math.sin(tiempoTranscurrido * 15));
+        pasoOffsetY = -cicloPaso * 7 * escalaActual;
+        rotacion = Math.sin(tiempoTranscurrido * 15) * 0.06;
+      }
+
+      const baseY = zombie.y + zombie.alto + pasoOffsetY;
+
+      ctx.save();
+      ctx.translate(zx + anchoDibujo / 2, baseY);
+      if (zombie.mirandoIzquierda) {
+        ctx.scale(-1, 1);
+      }
+      ctx.rotate(rotacion);
+      ctx.scale(zombie.scaleX, zombie.scaleY);
+
+      if (spriteActual.complete && spriteActual.naturalWidth > 0) {
+        ctx.drawImage(
+          spriteActual,
+          -anchoDibujo / 2,
+          -altoDibujo,
+          anchoDibujo,
+          altoDibujo
+        );
+      }
+      ctx.restore();
+
+      if (estado === 'festejando' || estado === 'terminado') {
+        dibujarFestejo();
+      }
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function iniciarVictoriaConFestejo() {
+      estado = 'festejando';
+      controlesTactiles.style.display = 'none';
+      crearFestejoMeta();
+      sonarVictoria();
+
+      const t = parseFloat(tiempoTranscurrido.toFixed(2));
+      tiempoPartidaActual = t;
+      const pisadas = plataformas.filter((p) => p.contable && p.encendida).length;
+      let textoRecord = '';
+
+      if (!mejorTiempo || t < parseFloat(mejorTiempo)) {
+        mejorTiempo = t;
+        localStorage.setItem('record_lupe_zombie', t);
+        hudRecord.textContent = t.toFixed(2) + ' s';
+        textoRecord = '<br>🏆 <b>¡NUEVO RÉCORD!</b>';
+      } else {
+        textoRecord = `<br>Mejor tiempo: <b>${parseFloat(mejorTiempo).toFixed(2)} s</b>`;
+      }
+
+      finalTitulo.textContent = '¡Feliz Cumpleaños Lupe!';
+      finalSubtitulo.style.display = 'block';
+      finalSubtitulo.textContent = '¡Lo lograste! Llegaste con la torta.';
+      finalDetalle.innerHTML = `Tiempo: <b>${t.toFixed(2)} segundos</b> · Letras: <b>${pisadas} / ${totalLetrasContables}</b>${textoRecord}`;
+      renderizarListaTiempos();
+
+      setTimeout(() => {
+        if (estado === 'festejando') {
+          estado = 'terminado';
+          sectorAgendar.style.display = 'flex';
+          screenFinal.style.display = 'flex';
+          setTimeout(() => inputNombre.focus(), 80);
+        }
+      }, 900);
+    }
+
+    function finalizarPartida(gano, motivoMuerte = '¡SE CAYÓ LA TORTA!') {
+      if (gano) {
+        iniciarVictoriaConFestejo();
+        return;
+      }
+
+      estado = 'terminado';
+      controlesTactiles.style.display = 'none';
+      sectorAgendar.style.display = 'none';
+      screenFinal.style.display = 'flex';
+
+      const pisadas = plataformas.filter((p) => p.contable && p.encendida).length;
+      finalTitulo.textContent = motivoMuerte;
+      finalSubtitulo.style.display = 'none';
+      finalDetalle.innerHTML = `Tiempo: <b>${tiempoTranscurrido.toFixed(2)} s</b> · Letras: <b>${pisadas} / ${totalLetrasContables}</b><br>¡Esquivá las sierras y saltá por las plataformas móviles hasta la meta!`;
+    }
+
+    iniciarIntroSegura();
+  </script>
+</body>
+</html>
